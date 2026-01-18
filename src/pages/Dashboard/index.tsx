@@ -6,28 +6,37 @@ import { useNavigate } from 'react-router-dom';
 import { LogOut, CarFront, Wrench, Search, PlusCircle, AlertCircle } from 'lucide-react';
 import { NewOSModal } from '../../components/NewOSModal';
 import { FinishOSModal } from '../../components/FinishOSModal';
+import { NewCarModal } from '../../components/NewCarModal';
 
 export function Dashboard() {
     const [carros, setCarros] = useState<Carro[]>([]);
     const [modalOpen, setModalOpen] = useState(false);
     const [finishModalOpen, setFinishModalOpen] = useState(false);
+    const [newCarModalOpen, setNewCarModalOpen] = useState(false);
     const [selectedPlaca, setSelectedPlaca] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
     
     const navigate = useNavigate();
 
-    async function loadCarros() {
+    async function loadCarros(query: string = '') {
         try {
-            const response = await api.get('/carros');
+            const params = query ? { params: { placa: query } } : {};
+            const response = await api.get('/carros', params);
             setCarros(response.data);
         } catch (error) {
             console.error(error);
-            handleLogout();
         }
     }
 
     function handleLogout() {
         localStorage.removeItem('token');
         navigate('/');
+    }
+
+    function handleSearch(e: React.ChangeEvent<HTMLInputElement>) {
+        const text = e.target.value;
+        setSearchTerm(text);
+        loadCarros(text);
     }
 
     function handleOpenOS(placa: string) {
@@ -67,16 +76,20 @@ export function Dashboard() {
                 isOpen={modalOpen} 
                 placa={selectedPlaca} 
                 onClose={() => setModalOpen(false)} 
-                onSuccess={() => {
-                    loadCarros();
-                }} 
+                onSuccess={() => loadCarros(searchTerm)} 
             />
             
             <FinishOSModal
                 isOpen={finishModalOpen}
                 placa={selectedPlaca}
                 onClose={() => setFinishModalOpen(false)}
-                onSuccess={() => loadCarros()}
+                onSuccess={() => loadCarros(searchTerm)}
+            />
+
+            <NewCarModal
+                isOpen={newCarModalOpen}
+                onClose={() => setNewCarModalOpen(false)}
+                onSuccess={() => loadCarros(searchTerm)}
             />
 
             <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-10">
@@ -116,9 +129,14 @@ export function Dashboard() {
                                 type="text"
                                 className="block w-full rounded-md border-0 bg-gray-800 py-1.5 pl-10 text-white ring-1 ring-inset ring-gray-700 placeholder:text-gray-500 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6"
                                 placeholder="Buscar por placa..."
+                                value={searchTerm}
+                                onChange={handleSearch}
                             />
                         </div>
-                        <button className="ml-3 inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-all">
+                        <button 
+                            onClick={() => setNewCarModalOpen(true)}
+                            className="ml-3 inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-all"
+                        >
                             Novo Carro
                         </button>
                     </div>
@@ -150,7 +168,6 @@ export function Dashboard() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{carro.ano}</td>
                                         <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(carro.status)}</td>
-                                        
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             {carro.status === 'DISPONIVEL' ? (
                                                 <button 
