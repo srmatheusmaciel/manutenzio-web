@@ -3,19 +3,24 @@ import { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import type { Carro } from '../../types/Carro';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, CarFront, Wrench, Search, PlusCircle, AlertCircle } from 'lucide-react';
+import { LogOut, CarFront, Wrench, Search, PlusCircle, AlertCircle, Trash2, Pencil } from 'lucide-react';
 import { NewOSModal } from '../../components/NewOSModal';
 import { FinishOSModal } from '../../components/FinishOSModal';
 import { NewCarModal } from '../../components/NewCarModal';
+import { EditCarModal } from '../../components/EditCarModal';
 
 export function Dashboard() {
     const [carros, setCarros] = useState<Carro[]>([]);
+    
     const [modalOpen, setModalOpen] = useState(false);
     const [finishModalOpen, setFinishModalOpen] = useState(false);
     const [newCarModalOpen, setNewCarModalOpen] = useState(false);
-    const [selectedPlaca, setSelectedPlaca] = useState('');
-    const [searchTerm, setSearchTerm] = useState('');
+    const [editCarModalOpen, setEditCarModalOpen] = useState(false);
     
+    const [selectedPlaca, setSelectedPlaca] = useState('');
+    const [carroToEdit, setCarroToEdit] = useState<Carro | null>(null);
+    
+    const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
 
     async function loadCarros(query: string = '') {
@@ -49,6 +54,26 @@ export function Dashboard() {
         setFinishModalOpen(true);
     }
 
+    function handleEditCar(carro: Carro) {
+        setCarroToEdit(carro);
+        setEditCarModalOpen(true);
+    }
+
+    async function handleDeleteCar(id: number, placa: string) {
+        const confirm = window.confirm(`Tem certeza que deseja excluir o veículo ${placa}? Essa ação não pode ser desfeita.`);
+        
+        if (confirm) {
+            try {
+                await api.delete(`/carros/${id}`);
+                alert('Veículo excluído com sucesso!');
+                loadCarros(searchTerm);
+            } catch (error) {
+                console.error(error);
+                alert('Erro ao excluir. Verifique se existem OS abertas para este carro.');
+            }
+        }
+    }
+
     useEffect(() => {
         loadCarros();
     }, []);
@@ -78,7 +103,6 @@ export function Dashboard() {
                 onClose={() => setModalOpen(false)} 
                 onSuccess={() => loadCarros(searchTerm)} 
             />
-            
             <FinishOSModal
                 isOpen={finishModalOpen}
                 placa={selectedPlaca}
@@ -89,6 +113,12 @@ export function Dashboard() {
             <NewCarModal
                 isOpen={newCarModalOpen}
                 onClose={() => setNewCarModalOpen(false)}
+                onSuccess={() => loadCarros(searchTerm)}
+            />
+            <EditCarModal 
+                isOpen={editCarModalOpen}
+                carroToEdit={carroToEdit}
+                onClose={() => setEditCarModalOpen(false)}
                 onSuccess={() => loadCarros(searchTerm)}
             />
 
@@ -120,7 +150,7 @@ export function Dashboard() {
                             Frota da Oficina
                         </h2>
                     </div>
-                    <div className="mt-4 flex md:ml-4 md:mt-0">
+                    <div className="mt-4 flex md:ml-4 md:mt-0 gap-3">
                          <div className="relative rounded-md shadow-sm">
                             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                 <Search className="h-4 w-4 text-gray-500" />
@@ -135,7 +165,7 @@ export function Dashboard() {
                         </div>
                         <button 
                             onClick={() => setNewCarModalOpen(true)}
-                            className="ml-3 inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-all"
+                            className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-all"
                         >
                             Novo Carro
                         </button>
@@ -149,9 +179,9 @@ export function Dashboard() {
                                 <tr>
                                     <th className="px-6 py-3.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Placa</th>
                                     <th className="px-6 py-3.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Veículo</th>
-                                    <th className="px-6 py-3.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Ano</th>
-                                    <th className="px-6 py-3.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status Atual</th>
-                                    <th className="relative px-6 py-3.5"><span className="sr-only">Ações</span></th>
+                                    <th className="px-6 py-3.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                                    <th className="px-6 py-3.5 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">Manutenção</th>
+                                    <th className="px-6 py-3.5 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Gerenciar</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-800 bg-gray-900">
@@ -163,12 +193,12 @@ export function Dashboard() {
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex flex-col">
                                                 <span className="text-sm font-medium text-gray-200">{carro.modelo}</span>
-                                                <span className="text-xs text-gray-500">{carro.fabricante} • {carro.cor}</span>
+                                                <span className="text-xs text-gray-500">{carro.fabricante} • {carro.ano} • {carro.cor}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{carro.ano}</td>
                                         <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(carro.status)}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                             {carro.status === 'DISPONIVEL' ? (
                                                 <button 
                                                     onClick={() => handleOpenOS(carro.placa)}
@@ -191,6 +221,25 @@ export function Dashboard() {
                                                     Inativo
                                                 </span>
                                             )}
+                                        </td>
+
+                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <div className="flex justify-end gap-2">
+                                                <button 
+                                                    onClick={() => handleEditCar(carro)}
+                                                    className="p-2 text-gray-400 hover:text-yellow-400 hover:bg-yellow-500/10 rounded-full transition-colors"
+                                                    title="Editar Veículo"
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleDeleteCar(carro.id, carro.placa)}
+                                                    className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-full transition-colors"
+                                                    title="Excluir Veículo"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
