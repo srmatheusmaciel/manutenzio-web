@@ -5,10 +5,12 @@ import type { Carro } from '../../types/Carro';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, CarFront, Wrench, Search, PlusCircle, AlertCircle } from 'lucide-react';
 import { NewOSModal } from '../../components/NewOSModal';
+import { FinishOSModal } from '../../components/FinishOSModal';
 
 export function Dashboard() {
     const [carros, setCarros] = useState<Carro[]>([]);
     const [modalOpen, setModalOpen] = useState(false);
+    const [finishModalOpen, setFinishModalOpen] = useState(false);
     const [selectedPlaca, setSelectedPlaca] = useState('');
     
     const navigate = useNavigate();
@@ -31,6 +33,11 @@ export function Dashboard() {
     function handleOpenOS(placa: string) {
         setSelectedPlaca(placa);
         setModalOpen(true);
+    }
+
+    function handleFinishOS(placa: string) {
+        setSelectedPlaca(placa);
+        setFinishModalOpen(true);
     }
 
     useEffect(() => {
@@ -63,6 +70,13 @@ export function Dashboard() {
                 onSuccess={() => {
                     loadCarros();
                 }} 
+            />
+            
+            <FinishOSModal
+                isOpen={finishModalOpen}
+                placa={selectedPlaca}
+                onClose={() => setFinishModalOpen(false)}
+                onSuccess={() => loadCarros()}
             />
 
             <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-10">
@@ -146,10 +160,18 @@ export function Dashboard() {
                                                     <PlusCircle className="h-4 w-4" />
                                                     Abrir OS
                                                 </button>
+                                            ) : carro.status === 'EM_MANUTENCAO' ? (
+                                                <button 
+                                                    onClick={() => handleFinishOS(carro.placa)}
+                                                    className="inline-flex items-center gap-1 text-yellow-400 hover:text-yellow-300 bg-yellow-500/10 hover:bg-yellow-500/20 px-3 py-1.5 rounded-md transition-all border border-yellow-500/20 cursor-pointer"
+                                                >
+                                                    <Wrench className="h-4 w-4" />
+                                                    Finalizar
+                                                </button>
                                             ) : (
                                                 <span className="inline-flex items-center gap-1 text-gray-500 cursor-not-allowed opacity-50 px-3 py-1.5">
                                                     <AlertCircle className="h-4 w-4" />
-                                                    Em Serviço
+                                                    Inativo
                                                 </span>
                                             )}
                                         </td>
