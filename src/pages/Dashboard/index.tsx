@@ -8,6 +8,7 @@ import { NewOSModal } from '../../components/NewOSModal';
 import { FinishOSModal } from '../../components/FinishOSModal';
 import { NewCarModal } from '../../components/NewCarModal';
 import { EditCarModal } from '../../components/EditCarModal';
+import { getUserRole } from '../../utils/auth';
 
 export function Dashboard() {
     const [carros, setCarros] = useState<Carro[]>([]);
@@ -32,6 +33,8 @@ export function Dashboard() {
             console.error(error);
         }
     }
+
+    const userRole = getUserRole();
 
     function handleLogout() {
         localStorage.removeItem('token');
@@ -232,13 +235,17 @@ export function Dashboard() {
                                                 >
                                                     <Pencil className="h-4 w-4" />
                                                 </button>
-                                                <button 
-                                                    onClick={() => handleDeleteCar(carro.id, carro.placa)}
-                                                    className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-full transition-colors"
-                                                    title="Excluir Veículo"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
+                                                
+                                                {userRole === 'ADMIN' && (
+                                                    <button 
+                                                        onClick={() => handleDeleteCar(carro.id, carro.placa)}
+                                                        className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-full transition-colors"
+                                                        title="Excluir Veículo"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                )}
+                                                
                                             </div>
                                         </td>
                                     </tr>
