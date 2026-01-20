@@ -3,12 +3,14 @@ import { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import type { Carro } from '../../types/Carro';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, CarFront, Wrench, Search, PlusCircle, AlertCircle, Trash2, Pencil } from 'lucide-react';
+import { LogOut, CarFront, Wrench, Search, PlusCircle, AlertCircle, Trash2, Pencil, UserPlus } from 'lucide-react';
 import { NewOSModal } from '../../components/NewOSModal';
 import { FinishOSModal } from '../../components/FinishOSModal';
 import { NewCarModal } from '../../components/NewCarModal';
 import { EditCarModal } from '../../components/EditCarModal';
 import { getUserRole } from '../../utils/auth';
+import { NewUserModal } from '../../components/NewUserModal';
+
 
 export function Dashboard() {
     const [carros, setCarros] = useState<Carro[]>([]);
@@ -22,6 +24,7 @@ export function Dashboard() {
     const [carroToEdit, setCarroToEdit] = useState<Carro | null>(null);
     
     const [searchTerm, setSearchTerm] = useState('');
+    const [newUserModalOpen, setNewUserModalOpen] = useState(false);
     const navigate = useNavigate();
 
     async function loadCarros(query: string = '') {
@@ -124,6 +127,10 @@ export function Dashboard() {
                 onClose={() => setEditCarModalOpen(false)}
                 onSuccess={() => loadCarros(searchTerm)}
             />
+            <NewUserModal 
+                isOpen={newUserModalOpen}
+                onClose={() => setNewUserModalOpen(false)}
+            />
 
             <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-10">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -166,6 +173,15 @@ export function Dashboard() {
                                 onChange={handleSearch}
                             />
                         </div>
+                        {userRole === 'ADMIN' && (
+                            <button 
+                                onClick={() => setNewUserModalOpen(true)}
+                                className="inline-flex items-center gap-2 rounded-md bg-purple-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-purple-500 transition-all"
+                            >
+                                <UserPlus className="h-4 w-4" />
+                                Novo Usuário
+                            </button>
+                        )}
                         <button 
                             onClick={() => setNewCarModalOpen(true)}
                             className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-all"
