@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import type { Carro } from '../../types/Carro';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, CarFront, Wrench, Search, PlusCircle, AlertCircle, Trash2, Pencil, UserPlus } from 'lucide-react';
+import { LogOut, CarFront, Wrench, Search, PlusCircle, AlertCircle, Trash2, Pencil, UserPlus, Download } from 'lucide-react';
 import { NewOSModal } from '../../components/NewOSModal';
 import { FinishOSModal } from '../../components/FinishOSModal';
 import { NewCarModal } from '../../components/NewCarModal';
@@ -79,6 +79,27 @@ export function Dashboard() {
             }
         }
     }
+
+    const handleExportCSV = async () => {
+        try {
+            const response = await api.get('/carros/export-cars', {
+            responseType: 'blob',
+            });
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'relatorio_carros.csv');
+            document.body.appendChild(link);
+            link.click();
+            
+            link.parentNode?.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Erro ao exportar:", error);
+            alert("Erro ao baixar o relatório. Verifique sua conexão.");
+        }
+    };
 
     useEffect(() => {
         loadCarros();
@@ -182,6 +203,13 @@ export function Dashboard() {
                                 Novo Usuário
                             </button>
                         )}
+                        <button
+                        onClick={handleExportCSV}
+                        className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+                        >
+                        <Download size={20} />
+                        Exportar CSV
+                        </button>
                         <button 
                             onClick={() => setNewCarModalOpen(true)}
                             className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-all"
